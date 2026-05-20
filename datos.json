@@ -1,0 +1,26 @@
+{
+    "ingresos": [
+        {
+            "descripcion": "sueldo poder judicial",
+            "monto": 30000000.0,
+            "fecha": "2026-05-16 22:20"
+        }
+    ],
+    "gastos": [
+        {
+            "descripcion": "compra semanal ",
+            "categoria": "Supermercado",
+            "monto": 57000.0,
+            "fecha": "2026-05-19 20:12"
+        }
+    ],
+    "fijos": [],
+    "deudas": [],
+    "vencimientos": [
+        {
+            "descripcion": "tarjeta visa",
+            "monto": 3600000.0,
+            "fecha": "2026-05-16"
+        }
+    ]
+}

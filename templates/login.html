@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LLEGAMOS</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #022c22);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 35px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 42px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 38px;
+            margin-bottom: 8px;
+        }
+
+        .sub {
+            color: #cbd5e1;
+            margin-bottom: 35px;
+            font-size: 17px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            font-size: 16px;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: #22c55e;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #16a34a;
+            transform: scale(1.02);
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 22px;
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        a:hover {
+            color: #86efac;
+        }
+
+        @media (max-width: 600px) {
+
+            .card {
+                padding: 28px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .sub {
+                font-size: 15px;
+            }
+
+            input {
+                padding: 15px;
+                font-size: 15px;
+            }
+
+            button {
+                padding: 15px;
+                font-size: 17px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div class="logo">💸</div>
+
+        <h1>LLEGAMOS</h1>
+
+        <p class="sub">
+            Entrá a tu panel financiero
+        </p>
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="usuario"
+                placeholder="Usuario"
+                required
+            >
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                required
+            >
+
+            <button type="submit">
+                Ingresar
+            </button>
+
+        </form>
+
+        <a href="/registro">
+            Crear cuenta nueva
+        </a>
+
+    </div>
+
+</body>
+</html>
