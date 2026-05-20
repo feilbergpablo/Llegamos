@@ -13,86 +13,75 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
 
         body {
             margin: 0;
             background: linear-gradient(135deg, #0f172a, #1e293b);
             color: white;
-            padding: 20px;
+            padding: 18px;
         }
 
         .top-user {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             background: rgba(255,255,255,0.08);
-            padding: 14px 18px;
-            border-radius: 16px;
-            margin-bottom: 25px;
+            padding: 14px;
+            border-radius: 14px;
+            margin-bottom: 20px;
         }
 
-        .top-user a {
-            color: #ff6b6b;
-            text-decoration: none;
-            font-weight: bold;
-        }
+        .top-user a { color: #ff6b6b; text-decoration: none; font-weight: bold; }
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
+        .container { max-width: 1200px; margin: auto; }
 
-        h1 {
-            font-size: 42px;
-            margin-bottom: 8px;
-        }
-
-        .sub {
-            color: #cbd5e1;
-            margin-bottom: 30px;
-            font-size: 18px;
-        }
+        h1 { font-size: 42px; margin-bottom: 8px; }
+        .sub { color: #cbd5e1; margin-bottom: 25px; }
 
         .saldo {
             background: #22c55e;
             color: #052e16;
-            padding: 20px;
+            padding: 22px;
             border-radius: 18px;
             font-size: 30px;
             font-weight: bold;
-            margin-bottom: 30px;
             text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .atajos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .atajos a {
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 14px;
+            text-align: center;
+            font-weight: bold;
         }
 
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
+            gap: 18px;
         }
 
-        .card, .estado, .alertas, .grafico-box,
-        form, .historial, .vencimientos {
+        .card, .estado, .alertas, .grafico-box, form, .historial, .vencimientos {
             background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 20px;
             padding: 22px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            margin-top: 25px;
         }
 
-        .card h2 {
-            margin-top: 0;
-            font-size: 22px;
-        }
+        .card { margin-top: 0; }
 
-        .monto {
-            font-size: 30px;
-            font-weight: bold;
-            margin-top: 12px;
-        }
+        .monto { font-size: 30px; font-weight: bold; margin-top: 10px; }
 
         .ingresos { color: #4ade80; }
         .gastos { color: #f87171; }
@@ -100,10 +89,37 @@
         .deudas { color: #fb923c; }
         .vence { color: #93c5fd; }
 
-        .estado, .alertas, .grafico-box,
-        form, .historial, .vencimientos {
-            margin-top: 35px;
+        select, input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
         }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .eliminar { background: #dc2626; margin-top: 12px; }
+
+        .movimiento {
+            background: rgba(255,255,255,0.06);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .fecha { color: #93c5fd; font-size: 14px; }
+        .categoria { color: #facc15; font-size: 14px; font-weight: bold; }
 
         .alerta {
             padding: 14px;
@@ -116,97 +132,18 @@
         .warning { background: rgba(250,204,21,0.2); }
         .danger { background: rgba(239,68,68,0.2); }
 
-        select, input {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        .movimiento {
-            background: rgba(255,255,255,0.06);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-
-        .fecha {
-            color: #93c5fd;
-            font-size: 14px;
-        }
-
-        .categoria {
-            color: #facc15;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .eliminar {
-            margin-top: 12px;
-            background: #dc2626;
-            padding: 10px;
-            font-size: 15px;
-        }
-
-        .eliminar:hover {
-            background: #b91c1c;
-        }
-
-        canvas {
-            margin-top: 20px;
-            max-height: 400px;
-        }
+        canvas { margin-top: 20px; max-height: 380px; }
 
         .footer {
             margin-top: 35px;
             text-align: center;
             color: #94a3b8;
-            font-size: 14px;
         }
 
         @media (max-width: 600px) {
-            body {
-                padding: 14px;
-            }
-
-            h1 {
-                font-size: 34px;
-            }
-
-            .saldo {
-                font-size: 24px;
-                padding: 18px;
-            }
-
-            .card h2 {
-                font-size: 19px;
-            }
-
-            .monto {
-                font-size: 28px;
-            }
-
-            .top-user {
-                font-size: 14px;
-            }
+            h1 { font-size: 38px; }
+            .saldo { font-size: 26px; }
+            .atajos { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -223,12 +160,16 @@
     <h1>💸 LLEGAMOS</h1>
     <p class="sub">Tu centro de control financiero familiar</p>
 
-    <div class="saldo">
-        Saldo disponible: ${{ saldo }}
+    <div class="saldo">Saldo disponible: ${{ saldo }}</div>
+
+    <div class="atajos">
+        <a href="#movimiento">➕ Cargar movimiento</a>
+        <a href="#vencimiento">📅 Cargar vencimiento</a>
+        <a href="#historial">📋 Ver historial</a>
+        <a href="#calendario">🗓 Ver calendario</a>
     </div>
 
     <div class="grid">
-
         <div class="card">
             <h2>💰 Ingresos</h2>
             <div class="monto ingresos">${{ ingresos }}</div>
@@ -253,12 +194,10 @@
             <h2>📅 Próximos pagos</h2>
             <div class="monto vence">${{ vencimientos_total }}</div>
         </div>
-
     </div>
 
     <div class="estado">
-        <h3>📊 Estado del mes</h3>
-
+        <h2>📊 Estado del mes</h2>
         {% if saldo_numero > 0 %}
             <p>✅ Vas bien. Todavía llegás.</p>
         {% elif saldo_numero == 0 %}
@@ -268,22 +207,7 @@
         {% endif %}
     </div>
 
-    <div class="alertas">
-        <h2>🧠 Alertas inteligentes</h2>
-
-        {% for alerta in alertas %}
-            <div class="alerta {{ alerta.tipo }}">
-                {{ alerta.mensaje }}
-            </div>
-        {% endfor %}
-    </div>
-
-    <div class="grafico-box">
-        <h2>📊 Gastos por categoría</h2>
-        <canvas id="graficoGastos"></canvas>
-    </div>
-
-    <form action="/agregar" method="POST">
+    <form id="movimiento" action="/agregar" method="POST">
         <h2>➕ Agregar movimiento</h2>
 
         <select name="tipo" required>
@@ -313,7 +237,7 @@
         <button type="submit">Guardar movimiento</button>
     </form>
 
-    <form action="/agregar_vencimiento" method="POST">
+    <form id="vencimiento" action="/agregar_vencimiento" method="POST">
         <h2>📅 Agregar vencimiento</h2>
 
         <input type="text" name="descripcion" placeholder="Ej: Tarjeta Visa" required>
@@ -323,7 +247,19 @@
         <button type="submit">Guardar vencimiento</button>
     </form>
 
-    <div class="vencimientos">
+    <div class="alertas">
+        <h2>🧠 Alertas inteligentes</h2>
+        {% for alerta in alertas %}
+            <div class="alerta {{ alerta.tipo }}">{{ alerta.mensaje }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="grafico-box">
+        <h2>📊 Gastos por categoría</h2>
+        <canvas id="graficoGastos"></canvas>
+    </div>
+
+    <div id="calendario" class="vencimientos">
         <h2>📆 Calendario de vencimientos</h2>
 
         {% if vencimientos %}
@@ -333,7 +269,7 @@
                     <span class="fecha">📅 {{ item.fecha }}</span><br>
                     ${{ item.monto }}
 
-                    <form action="/eliminar_vencimiento" method="POST" style="margin-top:12px; padding:0; background:transparent; border:none; box-shadow:none;">
+                    <form action="/eliminar_vencimiento" method="POST" style="padding:0;background:transparent;">
                         <input type="hidden" name="indice" value="{{ item.indice }}">
                         <button class="eliminar" type="submit">🗑 Eliminar vencimiento</button>
                     </form>
@@ -344,7 +280,7 @@
         {% endif %}
     </div>
 
-    <div class="historial">
+    <div id="historial" class="historial">
         <h2>📋 Historial de movimientos</h2>
 
         {% if historial %}
@@ -356,7 +292,7 @@
                     <span class="fecha">📅 {{ item.fecha }}</span><br>
                     ${{ item.monto }}
 
-                    <form action="/eliminar" method="POST" style="margin-top:12px; padding:0; background:transparent; border:none; box-shadow:none;">
+                    <form action="/eliminar" method="POST" style="padding:0;background:transparent;">
                         <input type="hidden" name="tipo" value="{{ item.tipo_original }}">
                         <input type="hidden" name="indice" value="{{ item.indice }}">
                         <button class="eliminar" type="submit">🗑 Eliminar</button>
@@ -368,9 +304,7 @@
         {% endif %}
     </div>
 
-    <div class="footer">
-        LLEGAMOS · Finanzas del hogar 😎
-    </div>
+    <div class="footer">LLEGAMOS · Finanzas del hogar 😎</div>
 
 </div>
 
@@ -400,9 +334,7 @@ new Chart(ctx, {
         responsive: true,
         plugins: {
             legend: {
-                labels: {
-                    color: 'white'
-                }
+                labels: { color: 'white' }
             }
         }
     }
