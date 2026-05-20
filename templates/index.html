@@ -15,6 +15,8 @@
 
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
 
+    <link rel="icon" type="image/png" href="/static/icons/icon-512.png">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -52,6 +54,70 @@
             margin: auto;
         }
 
+        h1 {
+            font-size: 52px;
+            margin-bottom: 10px;
+        }
+
+        .saldo {
+            background: #22c55e;
+            color: black;
+            padding: 25px;
+            border-radius: 20px;
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        .numero {
+            font-size: 42px;
+            font-weight: bold;
+        }
+
+        .ingresos {
+            color: #4ade80;
+        }
+
+        .gastos {
+            color: #ff6b6b;
+        }
+
+        .fijos {
+            color: #facc15;
+        }
+
+        .deudas {
+            color: #fb923c;
+        }
+
+        .proximos {
+            color: #60a5fa;
+        }
+
+        .estado {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
     </style>
 
 </head>
@@ -71,8 +137,60 @@
             Tu centro de control financiero familiar
         </p>
 
+        <div class="saldo">
+            Saldo disponible: ${{ saldo }}
+        </div>
+
+        <div class="cards">
+
+            <div class="card">
+                <h2>💰 Ingresos</h2>
+                <div class="numero ingresos">
+                    ${{ ingresos }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🛒 Gastos variables</h2>
+                <div class="numero gastos">
+                    ${{ gastos_variables }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🏠 Gastos fijos</h2>
+                <div class="numero fijos">
+                    ${{ gastos_fijos }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💳 Deudas</h2>
+                <div class="numero deudas">
+                    ${{ deudas }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🗓 Próximos pagos</h2>
+                <div class="numero proximos">
+                    ${{ proximos_pagos }}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="estado">
+
+            <h2>📊 Estado del mes</h2>
+
+            <p>
+                ⚠️ Estás justo. Cuidado con gastos extra.
+            </p>
+
+        </div>
+
     </div>
 
 </body>
-
 </html>
