@@ -9,20 +9,22 @@ from flask_login import (
     current_user
 )
 
+import os
 from datetime import datetime, date
 from collections import defaultdict
 
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "llegamos-secret-key"
-import os
 
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+else:
+    database_url = "sqlite:///database.db"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 db = SQLAlchemy(app)
 
@@ -140,7 +142,7 @@ def armar_vencimientos(datos):
     return vencimientos
 
 
-def generar_alertas(saldo, vencimientos):
+def generar_alertas_vencimientos(saldo, vencimientos):
     alertas = []
     hoy = date.today()
     total_proximos_7 = 0
@@ -186,10 +188,107 @@ def generar_alertas(saldo, vencimientos):
                 "mensaje": f"🚨 No cubrís próximos pagos. Te faltan ${formato_pesos(falta)}."
             })
 
+    return alertas
+
+
+def generar_alertas_financieras(datos, total_ingresos, total_gastos, total_fijos, total_deudas, saldo):
+    alertas = []
+
+    gastos_totales = total_gastos + total_fijos + total_deudas
+
+    if total_ingresos > 0 and gastos_totales > total_ingresos:
+        diferencia = gastos_totales - total_ingresos
+        alertas.append({
+            "tipo": "danger",
+            "mensaje": f"🚨 Tus gastos superan tus ingresos por ${formato_pesos(diferencia)}."
+        })
+
+    if total_ingresos > 0 and total_deudas > total_ingresos * 0.40:
+        porcentaje = int((total_deudas / total_ingresos) * 100)
+        alertas.append({
+            "tipo": "warning",
+            "mensaje": f"💳 Tus deudas consumen el {porcentaje}% de tus ingresos. Es una zona peligrosa."
+        })
+
+    if total_ingresos > 0 and total_fijos > total_ingresos * 0.50:
+        porcentaje = int((total_fijos / total_ingresos) * 100)
+        alertas.append({
+            "tipo": "warning",
+            "mensaje": f"🏠 Tus gastos fijos se llevan el {porcentaje}% de tus ingresos."
+        })
+
+    delivery_total = 0
+    supermercado_total = 0
+    salud_total = 0
+    cuotas_total = 0
+
+    for item in datos["gastos"] + datos["fijos"] + datos["deudas"]:
+        categoria = item.get("categoria", "").lower()
+        descripcion = item.get("descripcion", "").lower()
+        monto = float(item.get("monto", 0))
+
+        if "delivery" in categoria or "delivery" in descripcion:
+            delivery_total += monto
+
+        if "supermercado" in categoria or "supermercado" in descripcion:
+            supermercado_total += monto
+
+        if "salud" in categoria or "salud" in descripcion:
+            salud_total += monto
+
+        if "cuota" in categoria or "cuota" in descripcion or "préstamo" in categoria or "prestamo" in categoria:
+            cuotas_total += monto
+
+    if total_ingresos > 0 and delivery_total > total_ingresos * 0.15:
+        porcentaje = int((delivery_total / total_ingresos) * 100)
+        alertas.append({
+            "tipo": "warning",
+            "mensaje": f"🍔 Delivery representa el {porcentaje}% de tus ingresos. Ahí puede haber fuga de plata."
+        })
+
+    if delivery_total > 0 and salud_total > 0 and delivery_total > salud_total:
+        alertas.append({
+            "tipo": "warning",
+            "mensaje": "🍔 Estás gastando más en delivery que en salud."
+        })
+
+    if cuotas_total > 0 and supermercado_total > 0 and cuotas_total > supermercado_total:
+        alertas.append({
+            "tipo": "warning",
+            "mensaje": "📌 Este mes las cuotas superan al supermercado."
+        })
+
+    if saldo < 0:
+        alertas.append({
+            "tipo": "danger",
+            "mensaje": f"🚨 Estás en negativo por ${formato_pesos(abs(saldo))}."
+        })
+
+    return alertas
+
+
+def generar_alertas(datos, saldo, vencimientos, total_ingresos, total_gastos, total_fijos, total_deudas):
+    alertas = []
+
+    alertas.extend(
+        generar_alertas_vencimientos(saldo, vencimientos)
+    )
+
+    alertas.extend(
+        generar_alertas_financieras(
+            datos,
+            total_ingresos,
+            total_gastos,
+            total_fijos,
+            total_deudas,
+            saldo
+        )
+    )
+
     if not alertas:
         alertas.append({
             "tipo": "ok",
-            "mensaje": "✅ Sin vencimientos urgentes."
+            "mensaje": "✅ Tus números se ven saludables por ahora."
         })
 
     return alertas
@@ -265,7 +364,16 @@ def home():
     saldo = total_ingresos - total_gastos - total_fijos - total_deudas
 
     vencimientos = armar_vencimientos(datos)
-    alertas = generar_alertas(saldo, vencimientos)
+
+    alertas = generar_alertas(
+        datos,
+        saldo,
+        vencimientos,
+        total_ingresos,
+        total_gastos,
+        total_fijos,
+        total_deudas
+    )
 
     grafico_labels, grafico_valores = grafico_por_categoria(datos)
 
@@ -396,4 +504,4 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-        app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
