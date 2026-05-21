@@ -210,7 +210,7 @@
     <form id="movimiento" action="/agregar" method="POST">
         <h2>➕ Agregar movimiento</h2>
 
-        <select name="tipo" required>
+        <select name="tipo" id="tipoMovimiento" required>
             <option value="">Seleccionar tipo</option>
             <option value="ingresos">Ingreso</option>
             <option value="gastos">Gasto variable</option>
@@ -218,17 +218,8 @@
             <option value="deudas">Deuda</option>
         </select>
 
-        <select name="categoria">
-            <option value="">Seleccionar categoría</option>
-            <option value="Supermercado">Supermercado</option>
-            <option value="Nafta">Nafta</option>
-            <option value="Servicios">Servicios</option>
-            <option value="Tarjeta">Tarjeta</option>
-            <option value="Salud">Salud</option>
-            <option value="Colegio">Colegio</option>
-            <option value="Delivery">Delivery</option>
-            <option value="Impuestos">Impuestos</option>
-            <option value="Otros">Otros</option>
+        <select name="categoria" id="categoriaMovimiento" required>
+            <option value="">Primero seleccioná un tipo</option>
         </select>
 
         <input type="text" name="descripcion" placeholder="Descripción" required>
@@ -309,6 +300,80 @@
 </div>
 
 <script>
+const categoriasPorTipo = {
+    ingresos: [
+        "Sueldo",
+        "Deudores",
+        "Trabajos independientes",
+        "Venta",
+        "Ayuda familiar",
+        "Aguinaldo",
+        "Horas extra",
+        "Otros ingresos"
+    ],
+    gastos: [
+        "Supermercado",
+        "Nafta",
+        "Delivery",
+        "Transporte",
+        "Salud",
+        "Ropa",
+        "Mascotas",
+        "Salidas",
+        "Otros gastos"
+    ],
+    fijos: [
+        "Alquiler",
+        "Servicios",
+        "Internet",
+        "Celular",
+        "Colegio",
+        "Obra social",
+        "Impuestos",
+        "Seguro",
+        "Otros fijos"
+    ],
+    deudas: [
+        "Tarjeta",
+        "Préstamo",
+        "Fiado",
+        "Cuotas",
+        "Mercado Pago",
+        "Banco",
+        "Familia / amigos",
+        "Otras deudas"
+    ]
+};
+
+const tipoMovimiento = document.getElementById("tipoMovimiento");
+const categoriaMovimiento = document.getElementById("categoriaMovimiento");
+
+tipoMovimiento.addEventListener("change", function () {
+    const tipo = tipoMovimiento.value;
+
+    categoriaMovimiento.innerHTML = "";
+
+    if (!tipo) {
+        const opcion = document.createElement("option");
+        opcion.value = "";
+        opcion.textContent = "Primero seleccioná un tipo";
+        categoriaMovimiento.appendChild(opcion);
+        return;
+    }
+
+    const opcionInicial = document.createElement("option");
+    opcionInicial.value = "";
+    opcionInicial.textContent = "Seleccionar categoría";
+    categoriaMovimiento.appendChild(opcionInicial);
+
+    categoriasPorTipo[tipo].forEach(function (categoria) {
+        const opcion = document.createElement("option");
+        opcion.value = categoria;
+        opcion.textContent = categoria;
+        categoriaMovimiento.appendChild(opcion);
+    });
+});
+
 const ctx = document.getElementById('graficoGastos');
 
 new Chart(ctx, {
