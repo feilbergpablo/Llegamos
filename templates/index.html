@@ -132,6 +132,25 @@
         .warning { background: rgba(250,204,21,0.2); }
         .danger { background: rgba(239,68,68,0.2); }
 
+        .cuotas-box {
+            display: none;
+            background: rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 14px;
+        }
+
+        .cuotas-box h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .cuotas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
         canvas { margin-top: 20px; max-height: 380px; }
 
         .footer {
@@ -144,6 +163,7 @@
             h1 { font-size: 38px; }
             .saldo { font-size: 26px; }
             .atajos { grid-template-columns: 1fr; }
+            .cuotas-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -207,7 +227,7 @@
         {% endif %}
     </div>
 
-    <form id="movimiento" action="/agregar" method="POST">
+    <form id="formMovimiento" action="/agregar" method="POST">
         <h2>➕ Agregar movimiento</h2>
 
         <select name="tipo" id="tipoMovimiento" required>
@@ -222,7 +242,17 @@
             <option value="">Primero seleccioná un tipo</option>
         </select>
 
-        <input type="text" name="descripcion" placeholder="Descripción" required>
+        <input type="text" id="descripcionMovimiento" name="descripcion" placeholder="Descripción" required>
+
+        <div id="cuotasBox" class="cuotas-box">
+            <h3>📌 Cuotas del préstamo</h3>
+
+            <div class="cuotas-grid">
+                <input type="number" id="cuotaActual" placeholder="Cuota actual. Ej: 4" min="1">
+                <input type="number" id="cuotaTotal" placeholder="Total de cuotas. Ej: 24" min="1">
+            </div>
+        </div>
+
         <input type="number" step="0.01" name="monto" placeholder="Monto" required>
 
         <button type="submit">Guardar movimiento</button>
@@ -347,6 +377,28 @@ const categoriasPorTipo = {
 
 const tipoMovimiento = document.getElementById("tipoMovimiento");
 const categoriaMovimiento = document.getElementById("categoriaMovimiento");
+const cuotasBox = document.getElementById("cuotasBox");
+const formMovimiento = document.getElementById("formMovimiento");
+const descripcionMovimiento = document.getElementById("descripcionMovimiento");
+const cuotaActual = document.getElementById("cuotaActual");
+const cuotaTotal = document.getElementById("cuotaTotal");
+
+function actualizarCuotas() {
+    const tipo = tipoMovimiento.value;
+    const categoria = categoriaMovimiento.value;
+
+    if (tipo === "deudas" && categoria === "Préstamo") {
+        cuotasBox.style.display = "block";
+        cuotaActual.required = true;
+        cuotaTotal.required = true;
+    } else {
+        cuotasBox.style.display = "none";
+        cuotaActual.required = false;
+        cuotaTotal.required = false;
+        cuotaActual.value = "";
+        cuotaTotal.value = "";
+    }
+}
 
 tipoMovimiento.addEventListener("change", function () {
     const tipo = tipoMovimiento.value;
@@ -358,6 +410,7 @@ tipoMovimiento.addEventListener("change", function () {
         opcion.value = "";
         opcion.textContent = "Primero seleccioná un tipo";
         categoriaMovimiento.appendChild(opcion);
+        actualizarCuotas();
         return;
     }
 
@@ -372,6 +425,24 @@ tipoMovimiento.addEventListener("change", function () {
         opcion.textContent = categoria;
         categoriaMovimiento.appendChild(opcion);
     });
+
+    actualizarCuotas();
+});
+
+categoriaMovimiento.addEventListener("change", actualizarCuotas);
+
+formMovimiento.addEventListener("submit", function () {
+    const tipo = tipoMovimiento.value;
+    const categoria = categoriaMovimiento.value;
+
+    if (tipo === "deudas" && categoria === "Préstamo") {
+        const actual = cuotaActual.value;
+        const total = cuotaTotal.value;
+
+        if (actual && total) {
+            descripcionMovimiento.value = descripcionMovimiento.value + " · Cuota " + actual + "/" + total;
+        }
+    }
 });
 
 const ctx = document.getElementById('graficoGastos');
