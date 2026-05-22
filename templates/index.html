@@ -25,7 +25,33 @@
                     style="padding:0;background:transparent;margin-top:12px;"
                 >
 
-                    <a href="/editar/{{ item.id }}">
+                    <a
+    href="/editar/{{ item.id }}"
+    style="
+        display:block;
+        text-decoration:none;
+        margin-bottom:10px;
+    "
+>
+
+    <button
+        type="button"
+        style="
+            width:100%;
+            background:#2563eb;
+            color:white;
+            border:none;
+            padding:12px;
+            border-radius:12px;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+        "
+    >
+        ✏️ Editar
+    </button>
+
+</a>
                         <button
                             type="button"
                             style="
