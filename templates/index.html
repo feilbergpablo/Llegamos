@@ -19,43 +19,23 @@
 
                 ${{ item.monto }}
 
-                <form
-                    action="/eliminar"
-                    method="POST"
-                    style="padding:0;background:transparent;margin-top:12px;"
-                >
+                <div style="margin-top:12px;">
 
                     <a
-    href="/editar/{{ item.id }}"
-    style="
-        display:block;
-        text-decoration:none;
-        margin-bottom:10px;
-    "
->
-
-    <button
-        type="button"
-        style="
-            width:100%;
-            background:#2563eb;
-            color:white;
-            border:none;
-            padding:12px;
-            border-radius:12px;
-            font-size:16px;
-            font-weight:bold;
-            cursor:pointer;
-        "
-    >
-        ✏️ Editar
-    </button>
-
-</a>
+                        href="/editar/{{ item.id }}"
+                        style="text-decoration:none;"
+                    >
                         <button
                             type="button"
                             style="
+                                width:100%;
                                 background:#2563eb;
+                                color:white;
+                                border:none;
+                                padding:12px;
+                                border-radius:12px;
+                                font-size:16px;
+                                font-weight:bold;
                                 margin-bottom:10px;
                             "
                         >
@@ -63,23 +43,34 @@
                         </button>
                     </a>
 
-                    <input
-                        type="hidden"
-                        name="tipo"
-                        value="{{ item.tipo_original }}"
+                    <form
+                        action="/eliminar"
+                        method="POST"
+                        style="padding:0;background:transparent;"
                     >
 
-                    <input
-                        type="hidden"
-                        name="indice"
-                        value="{{ item.indice }}"
-                    >
+                        <input
+                            type="hidden"
+                            name="tipo"
+                            value="{{ item.tipo_original }}"
+                        >
 
-                    <button class="eliminar" type="submit">
-                        🗑 Eliminar
-                    </button>
+                        <input
+                            type="hidden"
+                            name="indice"
+                            value="{{ item.indice }}"
+                        >
 
-                </form>
+                        <button
+                            class="eliminar"
+                            type="submit"
+                        >
+                            🗑 Eliminar
+                        </button>
+
+                    </form>
+
+                </div>
 
             </div>
         {% endfor %}
