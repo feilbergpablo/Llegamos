@@ -113,6 +113,7 @@ def armar_historial(datos):
     for tipo in ["ingresos", "gastos", "fijos", "deudas"]:
         for indice, item in enumerate(datos[tipo]):
             historial.append({
+                "id": item.get("id"),
                 "tipo": nombres.get(tipo, tipo),
                 "tipo_original": tipo,
                 "indice": indice,
@@ -175,19 +176,6 @@ def generar_alertas_vencimientos(saldo, vencimientos):
             })
             total_proximos_7 += item["monto_numero"]
 
-    if total_proximos_7 > 0:
-        if saldo >= total_proximos_7:
-            alertas.append({
-                "tipo": "ok",
-                "mensaje": f"✅ Cubrís próximos pagos (${formato_pesos(total_proximos_7)})."
-            })
-        else:
-            falta = total_proximos_7 - saldo
-            alertas.append({
-                "tipo": "danger",
-                "mensaje": f"🚨 No cubrís próximos pagos. Te faltan ${formato_pesos(falta)}."
-            })
-
     return alertas
 
 
@@ -207,55 +195,21 @@ def generar_alertas_financieras(datos, total_ingresos, total_gastos, total_fijos
         porcentaje = int((total_deudas / total_ingresos) * 100)
         alertas.append({
             "tipo": "warning",
-            "mensaje": f"💳 Tus deudas consumen el {porcentaje}% de tus ingresos. Es una zona peligrosa."
-        })
-
-    if total_ingresos > 0 and total_fijos > total_ingresos * 0.50:
-        porcentaje = int((total_fijos / total_ingresos) * 100)
-        alertas.append({
-            "tipo": "warning",
-            "mensaje": f"🏠 Tus gastos fijos se llevan el {porcentaje}% de tus ingresos."
+            "mensaje": f"💳 Tus deudas consumen el {porcentaje}% de tus ingresos."
         })
 
     delivery_total = 0
-    supermercado_total = 0
-    salud_total = 0
-    cuotas_total = 0
 
-    for item in datos["gastos"] + datos["fijos"] + datos["deudas"]:
+    for item in datos["gastos"]:
         categoria = item.get("categoria", "").lower()
-        descripcion = item.get("descripcion", "").lower()
-        monto = float(item.get("monto", 0))
 
-        if "delivery" in categoria or "delivery" in descripcion:
-            delivery_total += monto
-
-        if "supermercado" in categoria or "supermercado" in descripcion:
-            supermercado_total += monto
-
-        if "salud" in categoria or "salud" in descripcion:
-            salud_total += monto
-
-        if "cuota" in categoria or "cuota" in descripcion or "préstamo" in categoria or "prestamo" in categoria:
-            cuotas_total += monto
+        if "delivery" in categoria:
+            delivery_total += item.get("monto", 0)
 
     if total_ingresos > 0 and delivery_total > total_ingresos * 0.15:
-        porcentaje = int((delivery_total / total_ingresos) * 100)
         alertas.append({
             "tipo": "warning",
-            "mensaje": f"🍔 Delivery representa el {porcentaje}% de tus ingresos. Ahí puede haber fuga de plata."
-        })
-
-    if delivery_total > 0 and salud_total > 0 and delivery_total > salud_total:
-        alertas.append({
-            "tipo": "warning",
-            "mensaje": "🍔 Estás gastando más en delivery que en salud."
-        })
-
-    if cuotas_total > 0 and supermercado_total > 0 and cuotas_total > supermercado_total:
-        alertas.append({
-            "tipo": "warning",
-            "mensaje": "📌 Este mes las cuotas superan al supermercado."
+            "mensaje": "🍔 Estás gastando mucho en delivery."
         })
 
     if saldo < 0:
@@ -288,7 +242,7 @@ def generar_alertas(datos, saldo, vencimientos, total_ingresos, total_gastos, to
     if not alertas:
         alertas.append({
             "tipo": "ok",
-            "mensaje": "✅ Tus números se ven saludables por ahora."
+            "mensaje": "✅ Tus números se ven saludables."
         })
 
     return alertas
@@ -308,6 +262,7 @@ def grafico_por_categoria(datos):
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
+
         usuario = request.form.get("usuario")
         password = request.form.get("password")
 
@@ -316,7 +271,10 @@ def registro():
         if existe:
             return "El usuario ya existe"
 
-        nuevo_usuario = Usuario(usuario=usuario, password=password)
+        nuevo_usuario = Usuario(
+            usuario=usuario,
+            password=password
+        )
 
         db.session.add(nuevo_usuario)
         db.session.commit()
@@ -328,11 +286,16 @@ def registro():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         usuario = request.form.get("usuario")
         password = request.form.get("password")
 
-        user = Usuario.query.filter_by(usuario=usuario, password=password).first()
+        user = Usuario.query.filter_by(
+            usuario=usuario,
+            password=password
+        ).first()
 
         if user:
             login_user(user)
@@ -353,6 +316,7 @@ def logout():
 @app.route("/")
 @login_required
 def home():
+
     datos = cargar_datos()
 
     total_ingresos = sum(item["monto"] for item in datos["ingresos"])
@@ -397,6 +361,7 @@ def home():
 @app.route("/agregar", methods=["POST"])
 @login_required
 def agregar():
+
     tipo = request.form.get("tipo")
     descripcion = request.form.get("descripcion")
     categoria = request.form.get("categoria")
@@ -425,9 +390,42 @@ def agregar():
     return redirect("/")
 
 
+@app.route("/editar/<int:id>", methods=["GET", "POST"])
+@login_required
+def editar(id):
+
+    movimiento = Movimiento.query.filter_by(
+        id=id,
+        usuario_id=current_user.id
+    ).first()
+
+    if not movimiento:
+        return redirect("/")
+
+    if request.method == "POST":
+
+        movimiento.descripcion = request.form.get("descripcion")
+        movimiento.categoria = request.form.get("categoria")
+
+        try:
+            movimiento.monto = float(request.form.get("monto"))
+        except:
+            pass
+
+        db.session.commit()
+
+        return redirect("/")
+
+    return render_template(
+        "editar.html",
+        movimiento=movimiento
+    )
+
+
 @app.route("/agregar_vencimiento", methods=["POST"])
 @login_required
 def agregar_vencimiento():
+
     descripcion = request.form.get("descripcion")
     monto = request.form.get("monto")
     fecha = request.form.get("fecha")
@@ -456,6 +454,7 @@ def agregar_vencimiento():
 @app.route("/eliminar", methods=["POST"])
 @login_required
 def eliminar():
+
     tipo = request.form.get("tipo")
     indice = request.form.get("indice")
 
@@ -480,6 +479,7 @@ def eliminar():
 @app.route("/eliminar_vencimiento", methods=["POST"])
 @login_required
 def eliminar_vencimiento():
+
     indice = request.form.get("indice")
 
     try:

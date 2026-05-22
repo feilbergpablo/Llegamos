@@ -1,481 +1,63 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLEGAMOS - Finanzas del Hogar</title>
+<div id="historial" class="historial">
+    <h2>📋 Historial de movimientos</h2>
 
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" href="/static/icons/icon-512.png">
+    {% if historial %}
+        {% for item in historial %}
+            <div class="movimiento">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <strong>{{ item.tipo }}</strong><br>
 
-    <style>
-        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+                <span class="categoria">
+                    🏷 {{ item.categoria }}
+                </span><br>
 
-        body {
-            margin: 0;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: white;
-            padding: 18px;
-        }
+                {{ item.descripcion }}<br>
 
-        .top-user {
-            display: flex;
-            justify-content: space-between;
-            background: rgba(255,255,255,0.08);
-            padding: 14px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-        }
+                <span class="fecha">
+                    📅 {{ item.fecha }}
+                </span><br>
 
-        .top-user a { color: #ff6b6b; text-decoration: none; font-weight: bold; }
+                ${{ item.monto }}
 
-        .container { max-width: 1200px; margin: auto; }
+                <form
+                    action="/eliminar"
+                    method="POST"
+                    style="padding:0;background:transparent;margin-top:12px;"
+                >
 
-        h1 { font-size: 42px; margin-bottom: 8px; }
-        .sub { color: #cbd5e1; margin-bottom: 25px; }
+                    <a href="/editar/{{ item.id }}">
+                        <button
+                            type="button"
+                            style="
+                                background:#2563eb;
+                                margin-bottom:10px;
+                            "
+                        >
+                            ✏️ Editar
+                        </button>
+                    </a>
 
-        .saldo {
-            background: #22c55e;
-            color: #052e16;
-            padding: 22px;
-            border-radius: 18px;
-            font-size: 30px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 25px;
-        }
+                    <input
+                        type="hidden"
+                        name="tipo"
+                        value="{{ item.tipo_original }}"
+                    >
 
-        .atajos {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
+                    <input
+                        type="hidden"
+                        name="indice"
+                        value="{{ item.indice }}"
+                    >
 
-        .atajos a {
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            padding: 15px;
-            border-radius: 14px;
-            text-align: center;
-            font-weight: bold;
-        }
+                    <button class="eliminar" type="submit">
+                        🗑 Eliminar
+                    </button>
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-        }
+                </form>
 
-        .card, .estado, .alertas, .grafico-box, form, .historial, .vencimientos {
-            background: rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 22px;
-            margin-top: 25px;
-        }
-
-        .card { margin-top: 0; }
-
-        .monto { font-size: 30px; font-weight: bold; margin-top: 10px; }
-
-        .ingresos { color: #4ade80; }
-        .gastos { color: #f87171; }
-        .fijos { color: #facc15; }
-        .deudas { color: #fb923c; }
-        .vence { color: #93c5fd; }
-
-        select, input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            background: #22c55e;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: bold;
-        }
-
-        .eliminar { background: #dc2626; margin-top: 12px; }
-
-        .movimiento {
-            background: rgba(255,255,255,0.06);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-
-        .fecha { color: #93c5fd; font-size: 14px; }
-        .categoria { color: #facc15; font-size: 14px; font-weight: bold; }
-
-        .alerta {
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            font-weight: bold;
-        }
-
-        .ok { background: rgba(34,197,94,0.2); }
-        .warning { background: rgba(250,204,21,0.2); }
-        .danger { background: rgba(239,68,68,0.2); }
-
-        .cuotas-box {
-            display: none;
-            background: rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 15px;
-            margin-bottom: 14px;
-        }
-
-        .cuotas-box h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
-        }
-
-        .cuotas-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        canvas { margin-top: 20px; max-height: 380px; }
-
-        .footer {
-            margin-top: 35px;
-            text-align: center;
-            color: #94a3b8;
-        }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 38px; }
-            .saldo { font-size: 26px; }
-            .atajos { grid-template-columns: 1fr; }
-            .cuotas-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="top-user">
-    <span>👤 {{ current_user.usuario }}</span>
-    <a href="/logout">Salir</a>
-</div>
-
-<div class="container">
-
-    <h1>💸 LLEGAMOS</h1>
-    <p class="sub">Tu centro de control financiero familiar</p>
-
-    <div class="saldo">Saldo disponible: ${{ saldo }}</div>
-
-    <div class="atajos">
-        <a href="#movimiento">➕ Cargar movimiento</a>
-        <a href="#vencimiento">📅 Cargar vencimiento</a>
-        <a href="#historial">📋 Ver historial</a>
-        <a href="#calendario">🗓 Ver calendario</a>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>💰 Ingresos</h2>
-            <div class="monto ingresos">${{ ingresos }}</div>
-        </div>
-
-        <div class="card">
-            <h2>🛒 Gastos variables</h2>
-            <div class="monto gastos">${{ gastos }}</div>
-        </div>
-
-        <div class="card">
-            <h2>🏠 Gastos fijos</h2>
-            <div class="monto fijos">${{ fijos }}</div>
-        </div>
-
-        <div class="card">
-            <h2>💳 Deudas</h2>
-            <div class="monto deudas">${{ deudas }}</div>
-        </div>
-
-        <div class="card">
-            <h2>📅 Próximos pagos</h2>
-            <div class="monto vence">${{ vencimientos_total }}</div>
-        </div>
-    </div>
-
-    <div class="estado">
-        <h2>📊 Estado del mes</h2>
-        {% if saldo_numero > 0 %}
-            <p>✅ Vas bien. Todavía llegás.</p>
-        {% elif saldo_numero == 0 %}
-            <p>⚠️ Estás justo. Cuidado con gastos extra.</p>
-        {% else %}
-            <p>🚨 Atención: estás en negativo.</p>
-        {% endif %}
-    </div>
-
-    <form id="formMovimiento" action="/agregar" method="POST">
-        <h2>➕ Agregar movimiento</h2>
-
-        <select name="tipo" id="tipoMovimiento" required>
-            <option value="">Seleccionar tipo</option>
-            <option value="ingresos">Ingreso</option>
-            <option value="gastos">Gasto variable</option>
-            <option value="fijos">Gasto fijo</option>
-            <option value="deudas">Deuda</option>
-        </select>
-
-        <select name="categoria" id="categoriaMovimiento" required>
-            <option value="">Primero seleccioná un tipo</option>
-        </select>
-
-        <input type="text" id="descripcionMovimiento" name="descripcion" placeholder="Descripción" required>
-
-        <div id="cuotasBox" class="cuotas-box">
-            <h3>📌 Cuotas del préstamo</h3>
-
-            <div class="cuotas-grid">
-                <input type="number" id="cuotaActual" placeholder="Cuota actual. Ej: 4" min="1">
-                <input type="number" id="cuotaTotal" placeholder="Total de cuotas. Ej: 24" min="1">
             </div>
-        </div>
-
-        <input type="number" step="0.01" name="monto" placeholder="Monto" required>
-
-        <button type="submit">Guardar movimiento</button>
-    </form>
-
-    <form id="vencimiento" action="/agregar_vencimiento" method="POST">
-        <h2>📅 Agregar vencimiento</h2>
-
-        <input type="text" name="descripcion" placeholder="Ej: Tarjeta Visa" required>
-        <input type="number" step="0.01" name="monto" placeholder="Monto" required>
-        <input type="date" name="fecha" required>
-
-        <button type="submit">Guardar vencimiento</button>
-    </form>
-
-    <div class="alertas">
-        <h2>🧠 Alertas inteligentes</h2>
-        {% for alerta in alertas %}
-            <div class="alerta {{ alerta.tipo }}">{{ alerta.mensaje }}</div>
         {% endfor %}
-    </div>
-
-    <div class="grafico-box">
-        <h2>📊 Gastos por categoría</h2>
-        <canvas id="graficoGastos"></canvas>
-    </div>
-
-    <div id="calendario" class="vencimientos">
-        <h2>📆 Calendario de vencimientos</h2>
-
-        {% if vencimientos %}
-            {% for item in vencimientos %}
-                <div class="movimiento">
-                    <strong>{{ item.descripcion }}</strong><br>
-                    <span class="fecha">📅 {{ item.fecha }}</span><br>
-                    ${{ item.monto }}
-
-                    <form action="/eliminar_vencimiento" method="POST" style="padding:0;background:transparent;">
-                        <input type="hidden" name="indice" value="{{ item.indice }}">
-                        <button class="eliminar" type="submit">🗑 Eliminar vencimiento</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No hay vencimientos cargados.</p>
-        {% endif %}
-    </div>
-
-    <div id="historial" class="historial">
-        <h2>📋 Historial de movimientos</h2>
-
-        {% if historial %}
-            {% for item in historial %}
-                <div class="movimiento">
-                    <strong>{{ item.tipo }}</strong><br>
-                    <span class="categoria">🏷 {{ item.categoria }}</span><br>
-                    {{ item.descripcion }}<br>
-                    <span class="fecha">📅 {{ item.fecha }}</span><br>
-                    ${{ item.monto }}
-
-                    <form action="/eliminar" method="POST" style="padding:0;background:transparent;">
-                        <input type="hidden" name="tipo" value="{{ item.tipo_original }}">
-                        <input type="hidden" name="indice" value="{{ item.indice }}">
-                        <button class="eliminar" type="submit">🗑 Eliminar</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No hay movimientos cargados todavía.</p>
-        {% endif %}
-    </div>
-
-    <div class="footer">LLEGAMOS · Finanzas del hogar 😎</div>
-
+    {% else %}
+        <p>No hay movimientos cargados todavía.</p>
+    {% endif %}
 </div>
-
-<script>
-const categoriasPorTipo = {
-    ingresos: [
-        "Sueldo",
-        "Deudores",
-        "Trabajos independientes",
-        "Venta",
-        "Ayuda familiar",
-        "Aguinaldo",
-        "Horas extra",
-        "Otros ingresos"
-    ],
-    gastos: [
-        "Supermercado",
-        "Nafta",
-        "Delivery",
-        "Transporte",
-        "Salud",
-        "Ropa",
-        "Mascotas",
-        "Salidas",
-        "Otros gastos"
-    ],
-    fijos: [
-        "Alquiler",
-        "Servicios",
-        "Internet",
-        "Celular",
-        "Colegio",
-        "Obra social",
-        "Impuestos",
-        "Seguro",
-        "Otros fijos"
-    ],
-    deudas: [
-        "Tarjeta",
-        "Préstamo",
-        "Fiado",
-        "Cuotas",
-        "Mercado Pago",
-        "Banco",
-        "Familia / amigos",
-        "Otras deudas"
-    ]
-};
-
-const tipoMovimiento = document.getElementById("tipoMovimiento");
-const categoriaMovimiento = document.getElementById("categoriaMovimiento");
-const cuotasBox = document.getElementById("cuotasBox");
-const formMovimiento = document.getElementById("formMovimiento");
-const descripcionMovimiento = document.getElementById("descripcionMovimiento");
-const cuotaActual = document.getElementById("cuotaActual");
-const cuotaTotal = document.getElementById("cuotaTotal");
-
-function actualizarCuotas() {
-    const tipo = tipoMovimiento.value;
-    const categoria = categoriaMovimiento.value;
-
-    if (tipo === "deudas" && categoria === "Préstamo") {
-        cuotasBox.style.display = "block";
-        cuotaActual.required = true;
-        cuotaTotal.required = true;
-    } else {
-        cuotasBox.style.display = "none";
-        cuotaActual.required = false;
-        cuotaTotal.required = false;
-        cuotaActual.value = "";
-        cuotaTotal.value = "";
-    }
-}
-
-tipoMovimiento.addEventListener("change", function () {
-    const tipo = tipoMovimiento.value;
-
-    categoriaMovimiento.innerHTML = "";
-
-    if (!tipo) {
-        const opcion = document.createElement("option");
-        opcion.value = "";
-        opcion.textContent = "Primero seleccioná un tipo";
-        categoriaMovimiento.appendChild(opcion);
-        actualizarCuotas();
-        return;
-    }
-
-    const opcionInicial = document.createElement("option");
-    opcionInicial.value = "";
-    opcionInicial.textContent = "Seleccionar categoría";
-    categoriaMovimiento.appendChild(opcionInicial);
-
-    categoriasPorTipo[tipo].forEach(function (categoria) {
-        const opcion = document.createElement("option");
-        opcion.value = categoria;
-        opcion.textContent = categoria;
-        categoriaMovimiento.appendChild(opcion);
-    });
-
-    actualizarCuotas();
-});
-
-categoriaMovimiento.addEventListener("change", actualizarCuotas);
-
-formMovimiento.addEventListener("submit", function () {
-    const tipo = tipoMovimiento.value;
-    const categoria = categoriaMovimiento.value;
-
-    if (tipo === "deudas" && categoria === "Préstamo") {
-        const actual = cuotaActual.value;
-        const total = cuotaTotal.value;
-
-        if (actual && total) {
-            descripcionMovimiento.value = descripcionMovimiento.value + " · Cuota " + actual + "/" + total;
-        }
-    }
-});
-
-const ctx = document.getElementById('graficoGastos');
-
-new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ grafico_labels | tojson }},
-        datasets: [{
-            data: {{ grafico_valores | tojson }},
-            backgroundColor: [
-                '#ef4444',
-                '#facc15',
-                '#fb923c',
-                '#3b82f6',
-                '#10b981',
-                '#8b5cf6',
-                '#ec4899',
-                '#f97316',
-                '#14b8a6'
-            ]
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                labels: { color: 'white' }
-            }
-        }
-    }
-});
-</script>
-
-</body>
-</html>
