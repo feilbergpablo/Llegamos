@@ -484,6 +484,15 @@ def eliminar_vencimiento(id):
 
 with app.app_context():
     db.create_all()
+    # Migración automática: agrandar columna password si es necesario
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text(
+                "ALTER TABLE usuario ALTER COLUMN password TYPE VARCHAR(256)"
+            ))
+            conn.commit()
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
