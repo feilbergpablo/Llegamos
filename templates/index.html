@@ -4,28 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LLEGAMOS - Finanzas del Hogar</title>
-
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/static/icons/icon-512.png">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        html { scroll-behavior: smooth; }
         body {
             margin: 0;
             background: linear-gradient(135deg, #0f172a, #1e293b);
             color: white;
             padding: 18px;
         }
-
         .top-user {
             display: flex;
             justify-content: space-between;
@@ -34,46 +26,61 @@
             border-radius: 14px;
             margin-bottom: 20px;
         }
-
-        .top-user a {
-            color: #ff6b6b;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-
-        h1 {
-            font-size: 42px;
-            margin-bottom: 8px;
-        }
-
-        .sub {
-            color: #cbd5e1;
-            margin-bottom: 25px;
-        }
-
+        .top-user a { color: #ff6b6b; text-decoration: none; font-weight: bold; }
+        .container { max-width: 1200px; margin: auto; }
+        h1 { font-size: 42px; margin-bottom: 8px; }
+        .sub { color: #cbd5e1; margin-bottom: 25px; }
         .saldo {
             background: #22c55e;
             color: #052e16;
-            padding: 22px;
-            border-radius: 18px;
-            font-size: 30px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 25px;
+            padding: 22px; border-radius: 18px;
+            font-size: 30px; font-weight: bold;
+            text-align: center; margin-bottom: 25px;
         }
-
+        .saldo.negativo { background: #dc2626; color: white; }
+        .filtro-mes {
+            background: rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filtro-mes label { color: #cbd5e1; font-size: 15px; }
+        .filtro-mes select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .filtro-mes select option { background: #1e293b; }
+        .filtro-mes button {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+            width: auto;
+        }
+        .filtro-mes a {
+            color: #94a3b8;
+            font-size: 14px;
+            text-decoration: none;
+        }
         .atajos {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin-bottom: 25px;
         }
-
         .atajos a {
             background: #2563eb;
             color: white;
@@ -83,141 +90,69 @@
             text-align: center;
             font-weight: bold;
         }
-
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 18px;
         }
-
-        .card,
-        .estado,
-        .alertas,
-        .grafico-box,
-        form,
-        .historial,
-        .vencimientos {
+        .card, .estado, .alertas, .grafico-box, form, .historial, .vencimientos {
             background: rgba(255,255,255,0.08);
             border-radius: 20px;
             padding: 22px;
             margin-top: 25px;
         }
-
-        .card {
-            margin-top: 0;
-        }
-
-        .monto {
-            font-size: 30px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
+        .card { margin-top: 0; }
+        .monto { font-size: 30px; font-weight: bold; margin-top: 10px; }
         .ingresos { color: #4ade80; }
         .gastos { color: #f87171; }
         .fijos { color: #facc15; }
         .deudas { color: #fb923c; }
         .vence { color: #93c5fd; }
-
-        select,
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
+        select, input {
+            width: 100%; padding: 15px; margin-bottom: 14px;
+            border: none; border-radius: 12px; font-size: 16px;
         }
-
         button {
-            width: 100%;
-            padding: 16px;
-            background: #22c55e;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: bold;
+            width: 100%; padding: 16px;
+            background: #22c55e; color: white;
+            border: none; border-radius: 12px;
+            font-size: 17px; font-weight: bold; cursor: pointer;
         }
-
-        .eliminar {
-            background: #dc2626;
-            margin-top: 12px;
-        }
-
+        .eliminar { background: #dc2626; margin-top: 12px; }
         .movimiento {
             background: rgba(255,255,255,0.06);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
+            padding: 15px; border-radius: 12px; margin-bottom: 12px;
         }
-
-        .fecha {
-            color: #93c5fd;
-            font-size: 14px;
-        }
-
-        .categoria {
-            color: #facc15;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .alerta {
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            font-weight: bold;
-        }
-
+        .fecha { color: #93c5fd; font-size: 14px; }
+        .categoria { color: #facc15; font-size: 14px; font-weight: bold; }
+        .alerta { padding: 14px; border-radius: 12px; margin-bottom: 12px; font-weight: bold; }
         .ok { background: rgba(34,197,94,0.2); }
         .warning { background: rgba(250,204,21,0.2); }
         .danger { background: rgba(239,68,68,0.2); }
-
         .cuotas-box {
             display: none;
             background: rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 15px;
-            margin-bottom: 14px;
+            border-radius: 14px; padding: 15px; margin-bottom: 14px;
         }
-
-        .cuotas-box h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
-        }
-
-        .cuotas-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        canvas {
-            margin-top: 20px;
-            max-height: 380px;
-        }
-
-        .footer {
-            margin-top: 35px;
-            text-align: center;
-            color: #94a3b8;
-        }
-
+        .cuotas-box h3 { margin-top: 0; margin-bottom: 12px; }
+        .cuotas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        canvas { margin-top: 20px; max-height: 380px; }
+        .footer { margin-top: 35px; text-align: center; color: #94a3b8; }
         .inicio-flotante {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #22c55e;
-            color: white;
-            text-decoration: none;
-            padding: 14px 18px;
-            border-radius: 50px;
-            font-weight: bold;
-            z-index: 9999;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: fixed; bottom: 20px; right: 20px;
+            background: #22c55e; color: white;
+            text-decoration: none; padding: 14px 18px;
+            border-radius: 50px; font-weight: bold;
+            z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-
+        .badge-mes {
+            background: rgba(37,99,235,0.3);
+            color: #93c5fd;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-left: 8px;
+        }
         @media (max-width: 600px) {
             h1 { font-size: 38px; }
             .saldo { font-size: 26px; }
@@ -241,7 +176,31 @@
     <h1>💸 LLEGAMOS</h1>
     <p class="sub">Tu centro de control financiero familiar</p>
 
-    <div class="saldo">Saldo disponible: ${{ saldo }}</div>
+    <div class="saldo {% if saldo_numero < 0 %}negativo{% endif %}">
+        Saldo disponible: ${{ saldo }}
+        {% if mes_seleccionado %}
+            <span class="badge-mes">{{ mes_seleccionado }}</span>
+        {% endif %}
+    </div>
+
+    <!-- Filtro por mes -->
+    {% if meses_disponibles %}
+    <div class="filtro-mes">
+        <label>📅 Filtrar por mes:</label>
+        <form method="GET" action="/" style="display:flex;gap:10px;align-items:center;padding:0;background:transparent;margin:0;border-radius:0;">
+            <select name="mes" style="margin-bottom:0;">
+                <option value="">Todos los meses</option>
+                {% for m in meses_disponibles %}
+                    <option value="{{ m }}" {% if m == mes_seleccionado %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" style="margin-bottom:0;">Ver</button>
+        </form>
+        {% if mes_seleccionado %}
+            <a href="/">✕ Limpiar filtro</a>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="atajos">
         <a href="#movimiento">➕ Cargar movimiento</a>
@@ -255,22 +214,18 @@
             <h2>💰 Ingresos</h2>
             <div class="monto ingresos">${{ ingresos }}</div>
         </div>
-
         <div class="card">
             <h2>🛒 Gastos variables</h2>
             <div class="monto gastos">${{ gastos }}</div>
         </div>
-
         <div class="card">
             <h2>🏠 Gastos fijos</h2>
             <div class="monto fijos">${{ fijos }}</div>
         </div>
-
         <div class="card">
             <h2>💳 Deudas</h2>
             <div class="monto deudas">${{ deudas }}</div>
         </div>
-
         <div class="card">
             <h2>📅 Próximos pagos</h2>
             <div class="monto vence">${{ vencimientos_total }}</div>
@@ -307,7 +262,6 @@
 
         <div id="cuotasBox" class="cuotas-box">
             <h3>📌 Cuotas del préstamo</h3>
-
             <div class="cuotas-grid">
                 <input type="number" id="cuotaActual" placeholder="Cuota actual. Ej: 4" min="1">
                 <input type="number" id="cuotaTotal" placeholder="Total de cuotas. Ej: 24" min="1">
@@ -315,17 +269,14 @@
         </div>
 
         <input type="number" step="0.01" name="monto" placeholder="Monto" required>
-
         <button type="submit">Guardar movimiento</button>
     </form>
 
     <form id="vencimiento" action="/agregar_vencimiento" method="POST">
         <h2>📅 Agregar vencimiento</h2>
-
         <input type="text" name="descripcion" placeholder="Ej: Tarjeta Visa" required>
         <input type="number" step="0.01" name="monto" placeholder="Monto" required>
         <input type="date" name="fecha" required>
-
         <button type="submit">Guardar vencimiento</button>
     </form>
 
@@ -343,16 +294,13 @@
 
     <div id="calendario" class="vencimientos">
         <h2>📆 Calendario de vencimientos</h2>
-
         {% if vencimientos %}
             {% for item in vencimientos %}
                 <div class="movimiento">
                     <strong>{{ item.descripcion }}</strong><br>
                     <span class="fecha">📅 {{ item.fecha }}</span><br>
                     ${{ item.monto }}
-
-                    <form action="/eliminar_vencimiento" method="POST" style="padding:0;background:transparent;">
-                        <input type="hidden" name="indice" value="{{ item.indice }}">
+                    <form action="/eliminar_vencimiento/{{ item.id }}" method="POST" style="padding:0;background:transparent;">
                         <button class="eliminar" type="submit">🗑 Eliminar vencimiento</button>
                     </form>
                 </div>
@@ -364,59 +312,24 @@
 
     <div id="historial" class="historial">
         <h2>📋 Historial de movimientos</h2>
-
         {% if historial %}
             {% for item in historial %}
                 <div class="movimiento">
-
                     <strong>{{ item.tipo }}</strong><br>
-
-                    <span class="categoria">
-                        🏷 {{ item.categoria }}
-                    </span><br>
-
+                    <span class="categoria">🏷 {{ item.categoria }}</span><br>
                     {{ item.descripcion }}<br>
-
-                    <span class="fecha">
-                        📅 {{ item.fecha }}
-                    </span><br>
-
+                    <span class="fecha">📅 {{ item.fecha }}</span><br>
                     ${{ item.monto }}
-
                     <div style="margin-top:12px;">
-
                         <a href="/editar/{{ item.id }}" style="text-decoration:none;">
-                            <button
-                                type="button"
-                                style="
-                                    width:100%;
-                                    background:#2563eb;
-                                    color:white;
-                                    border:none;
-                                    padding:12px;
-                                    border-radius:12px;
-                                    font-size:16px;
-                                    font-weight:bold;
-                                    margin-bottom:10px;
-                                "
-                            >
+                            <button type="button" style="width:100%;background:#2563eb;color:white;border:none;padding:12px;border-radius:12px;font-size:16px;font-weight:bold;margin-bottom:10px;cursor:pointer;">
                                 ✏️ Editar
                             </button>
                         </a>
-
-                        <form action="/eliminar" method="POST" style="padding:0;background:transparent;">
-
-                            <input type="hidden" name="tipo" value="{{ item.tipo_original }}">
-                            <input type="hidden" name="indice" value="{{ item.indice }}">
-
-                            <button class="eliminar" type="submit">
-                                🗑 Eliminar
-                            </button>
-
+                        <form action="/eliminar/{{ item.id }}" method="POST" style="padding:0;background:transparent;">
+                            <button class="eliminar" type="submit">🗑 Eliminar</button>
                         </form>
-
                     </div>
-
                 </div>
             {% endfor %}
         {% else %}
@@ -431,57 +344,16 @@
 <script>
 window.addEventListener("load", function () {
     if (window.location.hash) {
-        history.replaceState(null, null, window.location.pathname);
+        history.replaceState(null, null, window.location.pathname + window.location.search);
     }
-
-    setTimeout(function () {
-        window.scrollTo(0, 0);
-    }, 100);
+    setTimeout(function () { window.scrollTo(0, 0); }, 100);
 });
 
 const categoriasPorTipo = {
-    ingresos: [
-        "Sueldo",
-        "Deudores",
-        "Trabajos independientes",
-        "Venta",
-        "Ayuda familiar",
-        "Aguinaldo",
-        "Horas extra",
-        "Otros ingresos"
-    ],
-    gastos: [
-        "Supermercado",
-        "Nafta",
-        "Delivery",
-        "Transporte",
-        "Salud",
-        "Ropa",
-        "Mascotas",
-        "Salidas",
-        "Otros gastos"
-    ],
-    fijos: [
-        "Alquiler",
-        "Servicios",
-        "Internet",
-        "Celular",
-        "Colegio",
-        "Obra social",
-        "Impuestos",
-        "Seguro",
-        "Otros fijos"
-    ],
-    deudas: [
-        "Tarjeta",
-        "Préstamo",
-        "Fiado",
-        "Cuotas",
-        "Mercado Pago",
-        "Banco",
-        "Familia / amigos",
-        "Otras deudas"
-    ]
+    ingresos: ["Sueldo","Deudores","Trabajos independientes","Venta","Ayuda familiar","Aguinaldo","Horas extra","Otros ingresos"],
+    gastos: ["Supermercado","Nafta","Delivery","Transporte","Salud","Ropa","Mascotas","Salidas","Otros gastos"],
+    fijos: ["Alquiler","Servicios","Internet","Celular","Colegio","Obra social","Impuestos","Seguro","Otros fijos"],
+    deudas: ["Tarjeta","Préstamo","Fiado","Cuotas","Mercado Pago","Banco","Familia / amigos","Otras deudas"]
 };
 
 const tipoMovimiento = document.getElementById("tipoMovimiento");
@@ -495,7 +367,6 @@ const cuotaTotal = document.getElementById("cuotaTotal");
 function actualizarCuotas() {
     const tipo = tipoMovimiento.value;
     const categoria = categoriaMovimiento.value;
-
     if (tipo === "deudas" && categoria === "Préstamo") {
         cuotasBox.style.display = "block";
         cuotaActual.required = true;
@@ -511,9 +382,7 @@ function actualizarCuotas() {
 
 tipoMovimiento.addEventListener("change", function () {
     const tipo = tipoMovimiento.value;
-
     categoriaMovimiento.innerHTML = "";
-
     if (!tipo) {
         const opcion = document.createElement("option");
         opcion.value = "";
@@ -522,19 +391,16 @@ tipoMovimiento.addEventListener("change", function () {
         actualizarCuotas();
         return;
     }
-
     const opcionInicial = document.createElement("option");
     opcionInicial.value = "";
     opcionInicial.textContent = "Seleccionar categoría";
     categoriaMovimiento.appendChild(opcionInicial);
-
     categoriasPorTipo[tipo].forEach(function (categoria) {
         const opcion = document.createElement("option");
         opcion.value = categoria;
         opcion.textContent = categoria;
         categoriaMovimiento.appendChild(opcion);
     });
-
     actualizarCuotas();
 });
 
@@ -543,11 +409,9 @@ categoriaMovimiento.addEventListener("change", actualizarCuotas);
 formMovimiento.addEventListener("submit", function () {
     const tipo = tipoMovimiento.value;
     const categoria = categoriaMovimiento.value;
-
     if (tipo === "deudas" && categoria === "Préstamo") {
         const actual = cuotaActual.value;
         const total = cuotaTotal.value;
-
         if (actual && total) {
             descripcionMovimiento.value = descripcionMovimiento.value + " · Cuota " + actual + "/" + total;
         }
@@ -555,33 +419,18 @@ formMovimiento.addEventListener("submit", function () {
 });
 
 const ctx = document.getElementById('graficoGastos');
-
 new Chart(ctx, {
     type: 'doughnut',
     data: {
         labels: {{ grafico_labels | tojson }},
         datasets: [{
             data: {{ grafico_valores | tojson }},
-            backgroundColor: [
-                '#ef4444',
-                '#facc15',
-                '#fb923c',
-                '#3b82f6',
-                '#10b981',
-                '#8b5cf6',
-                '#ec4899',
-                '#f97316',
-                '#14b8a6'
-            ]
+            backgroundColor: ['#ef4444','#facc15','#fb923c','#3b82f6','#10b981','#8b5cf6','#ec4899','#f97316','#14b8a6']
         }]
     },
     options: {
         responsive: true,
-        plugins: {
-            legend: {
-                labels: { color: 'white' }
-            }
-        }
+        plugins: { legend: { labels: { color: 'white' } } }
     }
 });
 </script>

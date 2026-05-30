@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -8,6 +8,7 @@ from flask_login import (
     logout_user,
     current_user
 )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import os
 from datetime import datetime, date
@@ -15,7 +16,7 @@ from collections import defaultdict
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = "llegamos-secret-key"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-cambiame-en-produccion")
 
 database_url = os.environ.get("DATABASE_URL")
 
@@ -36,7 +37,7 @@ login_manager.login_view = "login"
 class Usuario(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
 
 
 class Movimiento(db.Model):
@@ -67,7 +68,7 @@ def formato_pesos(numero):
     return f"{numero:,}".replace(",", ".")
 
 
-def cargar_datos():
+def cargar_datos(mes=None, anio=None):
     datos = {
         "ingresos": [],
         "gastos": [],
@@ -76,7 +77,13 @@ def cargar_datos():
         "vencimientos": []
     }
 
-    movimientos = Movimiento.query.filter_by(usuario_id=current_user.id).all()
+    query = Movimiento.query.filter_by(usuario_id=current_user.id)
+
+    if mes and anio:
+        prefijo = f"{anio}-{mes:02d}"
+        query = query.filter(Movimiento.fecha.like(f"{prefijo}%"))
+
+    movimientos = query.all()
 
     for mov in movimientos:
         datos[mov.tipo].append({
@@ -111,12 +118,11 @@ def armar_historial(datos):
     }
 
     for tipo in ["ingresos", "gastos", "fijos", "deudas"]:
-        for indice, item in enumerate(datos[tipo]):
+        for item in datos[tipo]:
             historial.append({
                 "id": item.get("id"),
                 "tipo": nombres.get(tipo, tipo),
                 "tipo_original": tipo,
-                "indice": indice,
                 "descripcion": item.get("descripcion", ""),
                 "categoria": item.get("categoria", "Sin categoría"),
                 "monto": formato_pesos(item.get("monto", 0)),
@@ -130,9 +136,9 @@ def armar_historial(datos):
 def armar_vencimientos(datos):
     vencimientos = []
 
-    for indice, item in enumerate(datos["vencimientos"]):
+    for item in datos["vencimientos"]:
         vencimientos.append({
-            "indice": indice,
+            "id": item.get("id"),
             "descripcion": item.get("descripcion", ""),
             "monto": formato_pesos(item.get("monto", 0)),
             "monto_numero": item.get("monto", 0),
@@ -146,7 +152,6 @@ def armar_vencimientos(datos):
 def generar_alertas_vencimientos(saldo, vencimientos):
     alertas = []
     hoy = date.today()
-    total_proximos_7 = 0
 
     for item in vencimientos:
         try:
@@ -161,20 +166,16 @@ def generar_alertas_vencimientos(saldo, vencimientos):
                 "tipo": "danger",
                 "mensaje": f"🚨 Vencimiento atrasado: {item['descripcion']} por ${item['monto']}"
             })
-
         elif dias == 0:
             alertas.append({
                 "tipo": "danger",
                 "mensaje": f"🚨 Vence hoy: {item['descripcion']} por ${item['monto']}"
             })
-            total_proximos_7 += item["monto_numero"]
-
         elif dias <= 7:
             alertas.append({
                 "tipo": "warning",
                 "mensaje": f"⚠️ Vence en {dias} días: {item['descripcion']} por ${item['monto']}"
             })
-            total_proximos_7 += item["monto_numero"]
 
     return alertas
 
@@ -198,13 +199,11 @@ def generar_alertas_financieras(datos, total_ingresos, total_gastos, total_fijos
             "mensaje": f"💳 Tus deudas consumen el {porcentaje}% de tus ingresos."
         })
 
-    delivery_total = 0
-
-    for item in datos["gastos"]:
-        categoria = item.get("categoria", "").lower()
-
-        if "delivery" in categoria:
-            delivery_total += item.get("monto", 0)
+    delivery_total = sum(
+        item.get("monto", 0)
+        for item in datos["gastos"]
+        if "delivery" in item.get("categoria", "").lower()
+    )
 
     if total_ingresos > 0 and delivery_total > total_ingresos * 0.15:
         alertas.append({
@@ -223,21 +222,8 @@ def generar_alertas_financieras(datos, total_ingresos, total_gastos, total_fijos
 
 def generar_alertas(datos, saldo, vencimientos, total_ingresos, total_gastos, total_fijos, total_deudas):
     alertas = []
-
-    alertas.extend(
-        generar_alertas_vencimientos(saldo, vencimientos)
-    )
-
-    alertas.extend(
-        generar_alertas_financieras(
-            datos,
-            total_ingresos,
-            total_gastos,
-            total_fijos,
-            total_deudas,
-            saldo
-        )
-    )
+    alertas.extend(generar_alertas_vencimientos(saldo, vencimientos))
+    alertas.extend(generar_alertas_financieras(datos, total_ingresos, total_gastos, total_fijos, total_deudas, saldo))
 
     if not alertas:
         alertas.append({
@@ -259,21 +245,41 @@ def grafico_por_categoria(datos):
     return list(categorias.keys()), list(categorias.values())
 
 
+def obtener_meses_disponibles():
+    movimientos = Movimiento.query.filter_by(usuario_id=current_user.id).all()
+    meses = set()
+    for mov in movimientos:
+        try:
+            partes = mov.fecha[:7]  # "YYYY-MM"
+            meses.add(partes)
+        except:
+            pass
+    return sorted(meses, reverse=True)
+
+
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
+        usuario = request.form.get("usuario", "").strip()
+        password = request.form.get("password", "")
 
-        usuario = request.form.get("usuario")
-        password = request.form.get("password")
+        if not usuario or not password:
+            flash("Completá todos los campos.", "error")
+            return render_template("registro.html")
+
+        if len(password) < 4:
+            flash("La contraseña debe tener al menos 4 caracteres.", "error")
+            return render_template("registro.html")
 
         existe = Usuario.query.filter_by(usuario=usuario).first()
 
         if existe:
-            return "El usuario ya existe"
+            flash("Ese usuario ya existe, elegí otro.", "error")
+            return render_template("registro.html")
 
         nuevo_usuario = Usuario(
             usuario=usuario,
-            password=password
+            password=generate_password_hash(password)
         )
 
         db.session.add(nuevo_usuario)
@@ -286,22 +292,18 @@ def registro():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
+        usuario = request.form.get("usuario", "").strip()
+        password = request.form.get("password", "")
 
-        usuario = request.form.get("usuario")
-        password = request.form.get("password")
+        user = Usuario.query.filter_by(usuario=usuario).first()
 
-        user = Usuario.query.filter_by(
-            usuario=usuario,
-            password=password
-        ).first()
-
-        if user:
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect("/")
 
-        return "Usuario o contraseña incorrectos"
+        flash("Usuario o contraseña incorrectos.", "error")
+        return render_template("login.html")
 
     return render_template("login.html")
 
@@ -316,8 +318,17 @@ def logout():
 @app.route("/")
 @login_required
 def home():
+    mes_str = request.args.get("mes")
+    mes = None
+    anio = None
 
-    datos = cargar_datos()
+    if mes_str:
+        try:
+            anio, mes = int(mes_str[:4]), int(mes_str[5:7])
+        except:
+            pass
+
+    datos = cargar_datos(mes=mes, anio=anio)
 
     total_ingresos = sum(item["monto"] for item in datos["ingresos"])
     total_gastos = sum(item["monto"] for item in datos["gastos"])
@@ -330,16 +341,12 @@ def home():
     vencimientos = armar_vencimientos(datos)
 
     alertas = generar_alertas(
-        datos,
-        saldo,
-        vencimientos,
-        total_ingresos,
-        total_gastos,
-        total_fijos,
-        total_deudas
+        datos, saldo, vencimientos,
+        total_ingresos, total_gastos, total_fijos, total_deudas
     )
 
     grafico_labels, grafico_valores = grafico_por_categoria(datos)
+    meses_disponibles = obtener_meses_disponibles()
 
     return render_template(
         "index.html",
@@ -354,14 +361,15 @@ def home():
         vencimientos=vencimientos,
         alertas=alertas,
         grafico_labels=grafico_labels,
-        grafico_valores=grafico_valores
+        grafico_valores=grafico_valores,
+        meses_disponibles=meses_disponibles,
+        mes_seleccionado=mes_str or ""
     )
 
 
 @app.route("/agregar", methods=["POST"])
 @login_required
 def agregar():
-
     tipo = request.form.get("tipo")
     descripcion = request.form.get("descripcion")
     categoria = request.form.get("categoria")
@@ -393,7 +401,6 @@ def agregar():
 @app.route("/editar/<int:id>", methods=["GET", "POST"])
 @login_required
 def editar(id):
-
     movimiento = Movimiento.query.filter_by(
         id=id,
         usuario_id=current_user.id
@@ -403,7 +410,6 @@ def editar(id):
         return redirect("/")
 
     if request.method == "POST":
-
         movimiento.descripcion = request.form.get("descripcion")
         movimiento.categoria = request.form.get("categoria")
 
@@ -413,19 +419,14 @@ def editar(id):
             pass
 
         db.session.commit()
-
         return redirect("/")
 
-    return render_template(
-        "editar.html",
-        movimiento=movimiento
-    )
+    return render_template("editar.html", movimiento=movimiento)
 
 
 @app.route("/agregar_vencimiento", methods=["POST"])
 @login_required
 def agregar_vencimiento():
-
     descripcion = request.form.get("descripcion")
     monto = request.form.get("monto")
     fecha = request.form.get("fecha")
@@ -451,50 +452,32 @@ def agregar_vencimiento():
     return redirect("/")
 
 
-@app.route("/eliminar", methods=["POST"])
+@app.route("/eliminar/<int:id>", methods=["POST"])
 @login_required
-def eliminar():
+def eliminar(id):
+    movimiento = Movimiento.query.filter_by(
+        id=id,
+        usuario_id=current_user.id
+    ).first()
 
-    tipo = request.form.get("tipo")
-    indice = request.form.get("indice")
-
-    try:
-        indice = int(indice)
-
-        movimientos = Movimiento.query.filter_by(
-            usuario_id=current_user.id,
-            tipo=tipo
-        ).order_by(Movimiento.id).all()
-
-        if 0 <= indice < len(movimientos):
-            db.session.delete(movimientos[indice])
-            db.session.commit()
-
-    except:
-        pass
+    if movimiento:
+        db.session.delete(movimiento)
+        db.session.commit()
 
     return redirect("/")
 
 
-@app.route("/eliminar_vencimiento", methods=["POST"])
+@app.route("/eliminar_vencimiento/<int:id>", methods=["POST"])
 @login_required
-def eliminar_vencimiento():
+def eliminar_vencimiento(id):
+    vencimiento = Vencimiento.query.filter_by(
+        id=id,
+        usuario_id=current_user.id
+    ).first()
 
-    indice = request.form.get("indice")
-
-    try:
-        indice = int(indice)
-
-        vencimientos = Vencimiento.query.filter_by(
-            usuario_id=current_user.id
-        ).order_by(Vencimiento.fecha).all()
-
-        if 0 <= indice < len(vencimientos):
-            db.session.delete(vencimientos[indice])
-            db.session.commit()
-
-    except:
-        pass
+    if vencimiento:
+        db.session.delete(vencimiento)
+        db.session.commit()
 
     return redirect("/")
 
